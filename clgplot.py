@@ -122,8 +122,8 @@ class IrmCurves:
     def read_file(filename):
         re1 = re.compile(r'^ True SIRM= +([0-9.E-]+)')
         re2 = re.compile(r'^ Abs Cont= +([0-9.E-]+)')
-        re3 = re.compile(r'^ Rel Cont= +([.0-9]+) +Mean= +([.0-9]+) +' +
-                         r'DP= +([.0-9]+)\s+$')
+        re3 = re.compile(r'^ Rel Cont= +([0-9.E-]+) +Mean= +([0-9.E-]+) +' +
+                         r'DP= +([0-9.E-]+)\s+$')
         infile = open(filename)
         sirm = float(re1.search(infile.readline()).groups()[0])
         params = []
@@ -132,7 +132,8 @@ class IrmCurves:
             comp = infile.readline()
             if not comp.startswith(' Component'): break
             param = [float(re2.search(infile.readline()).groups()[0])]
-            param += map(float,re3.search(infile.readline()).groups())
+            line3 = infile.readline()
+            param += map(float,re3.search(line3).groups())
             params.append(param)
             infile.readline() # skip blank line
         return IrmCurves(basename(filename), sirm, params)
@@ -158,7 +159,7 @@ def plot_clg_fit(series, curves):
                    ls='', color='black', markerfacecolor='none', markersize=6)
 
     if curves:
-        xs = arange(0.5, 3, 0.02)
+        xs = arange(0.1, 3, 0.02)
         ys = [curves.evaluate(x, True) for x in xs]
         pylab.plot(xs, ys, linewidth=1.0, color='black')
         for curve in curves.components:
