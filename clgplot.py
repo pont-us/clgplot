@@ -162,25 +162,25 @@ class App:
 
         master.title('CLG Plot')
         frame = Tki.Frame(master)
-        frame.pack()
+        frame.grid(padx=20, pady=15)
 
         self.data_button = \
             Tki.Button(frame, text="Choose Data file",
                            command=self.choose_data_file)
-        self.data_button.pack(side=Tki.TOP)
+        self.data_button.grid(row=0, pady=5)
 
         self.irmunmix_button = \
             Tki.Button(frame, text="Choose IrmUnmix file",
                            command=self.choose_curves_file)
-        self.irmunmix_button.pack(side=Tki.TOP)
+        self.irmunmix_button.grid(row=1, pady=5)
 
         self.plot_button = \
             Tki.Button(frame, text="Plot data", command=self.plot)
-        self.plot_button.pack(side=Tki.TOP)
+        self.plot_button.grid(row=2, pady=5)
 
         self.quit_button = Tki.Button(frame, text="Quit",
                                      command=frame.quit)
-        self.quit_button.pack(side=Tki.TOP)
+        self.quit_button.grid(row=3, pady=5)
 
         master.update_idletasks()
 
@@ -198,7 +198,7 @@ class App:
     def choose_curves_file(self):
         input_file = \
             askopenfilename(title = 'Select IrmUnmix parameter file')
-        self.read_curves_file(input_file)
+        if input_file: self.read_curves_file(input_file)
 
     def read_curves_file(self, input_file):
         self.curves = IrmCurves.read_file(input_file)
@@ -206,7 +206,7 @@ class App:
     def choose_data_file(self):
         input_file = \
             askopenfilename(title = 'Select IRM data file')
-        self.read_data_file(input_file)
+        if input_file: self.read_data_file(input_file)
 
     def read_data_file(self, input_file):
         self.series = DataSeries.read(input_file)
