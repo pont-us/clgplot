@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import Tkinter
-import re, pylab, numpy
-from numpy import array
+import os, re, pylab
+import Tkinter as Tki
 from os.path import basename
-import os
-from math import pi, exp, log10
+from numpy import pi, exp, log10, array, arange
 from tkFileDialog import askopenfilename
 from optparse import OptionParser
 
@@ -20,7 +18,7 @@ def gradient(xs, ys):
         if grad1 == None: grad1 = grad2
         if grad2 == None: grad2 = grad1
         result.append((grad1+grad2) / 2)
-    return result
+    return array(result)
 
 class DataSeries:
     '''A lightly wrapped 2-column matrix with a method for reading
@@ -135,7 +133,7 @@ def plot_clg_fit(series, curves):
 
     xs = map(log10, series.data[0][1:])
     ys = series.data[1][1:]
-    pylab.plot(xs, numpy.array(gradient(xs, ys)) / curves.sirm, marker='o',
+    pylab.plot(xs, gradient(xs, ys) / curves.sirm, marker='o',
              ls='', color='black', markerfacecolor='none', markersize=6)
 
     xs = numpy.arange(0.5, 3, 0.02)
@@ -163,26 +161,26 @@ class App:
         self.series = None
         self.curves = None
 
-        frame = Tkinter.Frame(master)
+        frame = Tki.Frame(master)
         frame.pack()
 
         self.data_button = \
-            Tkinter.Button(frame, text="Choose Data file",
+            Tki.Button(frame, text="Choose Data file",
                            command=self.choose_data_file)
-        self.data_button.pack(side=Tkinter.TOP)
+        self.data_button.pack(side=Tki.TOP)
 
         self.irmunmix_button = \
-            Tkinter.Button(frame, text="Choose IrmUnmix file",
+            Tki.Button(frame, text="Choose IrmUnmix file",
                            command=self.choose_curves_file)
-        self.irmunmix_button.pack(side=Tkinter.TOP)
+        self.irmunmix_button.pack(side=Tki.TOP)
 
         self.plot_button = \
-            Tkinter.Button(frame, text="Plot data", command=self.plot)
-        self.plot_button.pack(side=Tkinter.TOP)
+            Tki.Button(frame, text="Plot data", command=self.plot)
+        self.plot_button.pack(side=Tki.TOP)
 
-        self.quit_button = Tkinter.Button(frame, text="Quit",
+        self.quit_button = Tki.Button(frame, text="Quit",
                                      command=frame.quit)
-        self.quit_button.pack(side=Tkinter.TOP)
+        self.quit_button.pack(side=Tki.TOP)
 
         master.update_idletasks()
 
@@ -228,7 +226,7 @@ def main():
                       default=False, help='Plot at once.')
     (options, args) = parser.parse_args()
     
-    root = Tkinter.Tk()
+    root = Tki.Tk()
     app = App(root, options)
     root.mainloop()
 
