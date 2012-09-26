@@ -130,24 +130,26 @@ class IrmCurves:
 
 def plot_clg_fit(series, curves):
 
-    xs = map(log10, series.data[0][1:])
-    ys = series.data[1][1:]
-    pylab.plot(xs, gradient(xs, ys) / curves.sirm, marker='o',
-             ls='', color='black', markerfacecolor='none', markersize=6)
+    sirm = 1
+    if curves: sirm = curves.sirm
 
-    xs = arange(0.5, 3, 0.02)
-    ys = [curves.evaluate(x, True) for x in xs]
-    pylab.plot(xs, ys, linewidth=1.0, color='black')
-    j = 0
-    for curve in curves.components:
-        ys2 = [curve.evaluate(x) for x in xs]
-        pylab.plot(xs, ys2, linewidth=0.5, color='black')
-        j += 1
+    if series:
+        xs = map(log10, series.data[0][1:])
+        ys = series.data[1][1:]
+        pylab.plot(xs, gradient(xs, ys) / sirm, marker='o',
+                   ls='', color='black', markerfacecolor='none', markersize=6)
+
+    if curves:
+        xs = arange(0.5, 3, 0.02)
+        ys = [curves.evaluate(x, True) for x in xs]
+        pylab.plot(xs, ys, linewidth=1.0, color='black')
+        for curve in curves.components:
+            ys2 = [curve.evaluate(x) for x in xs]
+            pylab.plot(xs, ys2, linewidth=0.5, color='black')
+
     pylab.ylim(ymin=0)
-    # fettle_subplot(ax, i,
-    #                'log10(Applied field (mT))',
-    #                'Gradient of normalized magnetization',
-    #                5, 2, 2)
+    pylab.xlabel('log10(Applied field (mT))')
+    pylab.ylabel('Gradient of magnetization')
     pylab.ion()
     pylab.show()
 
@@ -158,6 +160,7 @@ class App:
         self.series = None
         self.curves = None
 
+        master.title('CLG Plot')
         frame = Tki.Frame(master)
         frame.pack()
 
