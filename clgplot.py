@@ -42,7 +42,6 @@ class DataSeries:
         there are more than two columns, the extra ones are ignored. If there
         is a header line (or any other non-numeric line), it is ignored.'''
         
-        print filename
         rows = []
         # 'U' for universal newlines
         with open(filename, 'U') as fh:
@@ -136,15 +135,13 @@ def plot_clg_fit(series, curves):
     pylab.plot(xs, gradient(xs, ys) / curves.sirm, marker='o',
              ls='', color='black', markerfacecolor='none', markersize=6)
 
-    xs = numpy.arange(0.5, 3, 0.02)
+    xs = arange(0.5, 3, 0.02)
     ys = [curves.evaluate(x, True) for x in xs]
-    pylab.plot(xs, ys, linewidth=0.5, color='black')
+    pylab.plot(xs, ys, linewidth=1.0, color='black')
     j = 0
     for curve in curves.components:
         ys2 = [curve.evaluate(x) for x in xs]
-        pylab.fill_between(xs, 0, ys2, color='black', alpha=0.2)
-        # ax.fill_between(xs, 0, ys2, hatch=('||','--')[i])
-        # fill_between hatching not possible :-(
+        pylab.plot(xs, ys2, linewidth=0.5, color='black')
         j += 1
     pylab.ylim(ymin=0)
     # fettle_subplot(ax, i,
@@ -186,12 +183,10 @@ class App:
 
         w = master.winfo_screenwidth()
         h = master.winfo_screenheight()
-        print master.geometry()
         mastersize = tuple(int(_) for _ in master.geometry().split('+')[0].split('x'))
         x = w/2 - mastersize[0]/2
         y = h/2 - mastersize[1]/2
-        print "%dx%d+%d+%d" % (mastersize + (x, y))
-        #master.geometry("%dx%d+%d+%d" % (mastersize + (x, y)))
+        # master.geometry("%dx%d+%d+%d" % (mastersize + (x, y)))
 
         if options.data_file: self.read_data_file(options.data_file)
         if options.curves_file: self.read_curves_file(options.curves_file)
