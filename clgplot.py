@@ -195,7 +195,7 @@ class App:
     def choose_curves_file(self):
         input_file = \
             askopenfilename(title = 'Select IrmUnmix parameter file')
-        read_curves_file(self, input_file)
+        self.read_curves_file(input_file)
 
     def read_curves_file(self, input_file):
         self.curves = IrmCurves.read_file(input_file)
@@ -203,7 +203,7 @@ class App:
     def choose_data_file(self):
         input_file = \
             askopenfilename(title = 'Select IRM data file')
-        read_data_file(self, input_file)
+        self.read_data_file(input_file)
 
     def read_data_file(self, input_file):
         self.series = DataSeries.read(input_file)
