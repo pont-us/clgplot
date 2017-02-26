@@ -8,7 +8,9 @@ cumulative log-Gaussian (CLG) curves. clgplot produces a plot of the
 data and/or curves using pylab. The plot can be viewed on-screen and
 saved to a file.
 
-clgplot is copyright 2012 by Pontus Lurcock (pont -at- talvi -dot- net).
+clgplot is copyright 2012 by Pontus Lurcock (pont -at- talvi -dot- net)
+and released under the MIT license (see source code for full license
+text).
 
 [1] See http://www.geo.uu.nl/~forth/Software/irmunmix/ and
 http://dx.doi.org/10.1046/j.0956-540x.2001.01558.x
