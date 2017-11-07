@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# clgplot is Copyright 2012 Pontus Lurcock (pont at talvi dot net)
+# clgplot is Copyright 2012-2017 Pontus Lurcock (pont at talvi dot net)
 # and released under the MIT license:
 
 # Permission is hereby granted, free of charge, to any person obtaining
@@ -24,7 +24,7 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-'''
+"""
 A simple interactive application for plotting IRM acquisition data.
 
 clgplot reads two types of file: raw IRM acquisition data (as a two-column
@@ -34,55 +34,64 @@ acquisition data as a sum of cumulative log-Gaussian (CLG) curves. clgplot
 produces a plot of the data and/or curves using pylab. The plot can be viewed
 on-screen and saved to a file.
 
-clgplot is copyright 2012 by Pontus Lurcock, who may be contacted at
+clgplot is copyright 2012-2017 by Pontus Lurcock, who may be contacted at
 pont talvi net
     @     .
 
 [1] See http://www.geo.uu.nl/~forth/Software/irmunmix/ and
 http://dx.doi.org/10.1046/j.0956-540x.2001.01558.x
-'''
+"""
 
-import os, re, pylab
 import Tkinter as Tki
-from os.path import basename
+import os
+import pylab
+import re
+from math import sqrt, erf
 from numpy import pi, exp, log10, array, arange
-from tkFileDialog import askopenfilename
 from optparse import OptionParser
+from os.path import basename
+from tkFileDialog import askopenfilename
+
 
 def gradient(xs, ys):
-    '''Return a new array containing the gradients at all the x points'''
+    """Return a new array containing the gradients at all the x points"""
     result = []
     for i in range(0, len(xs)):
         grad1, grad2 = None, None
-        if i<len(xs)-1: grad1 = (ys[i+1]-ys[i]) / (xs[i+1]-xs[i])
-        if i>0: grad2 = (ys[i]-ys[i-1]) / (xs[i]-xs[i-1])
-        if grad1 == None: grad1 = grad2
-        if grad2 == None: grad2 = grad1
-        result.append((grad1+grad2) / 2)
+        if i < len(xs) - 1:
+            grad1 = (ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i])
+        if i > 0:
+            grad2 = (ys[i] - ys[i - 1]) / (xs[i] - xs[i - 1])
+        if grad1 is None:
+            grad1 = grad2
+        if grad2 is None:
+            grad2 = grad1
+        result.append((grad1 + grad2) / 2)
     return array(result)
 
-class DataSeries:
-    '''A lightly wrapped 2-column matrix with a method for reading
-    it from a file.'''
 
-    def __init__(self, data, name = None, filename = None):
+class DataSeries:
+    """A lightly wrapped 2-column matrix with a method for reading
+    it from a file."""
+
+    def __init__(self, data, name=None, filename=None):
         self.data = data
         self.filename = filename
         self.name = name
-        if name != None:
+        if name is not None:
             self.name = name
         else:
-            if filename != None:
+            if filename is not None:
                 self.name = os.path.basename(filename)
             else:
                 self.name = None
 
     @staticmethod
-    def read(filename, col1 = 0, col2 = 1, name = None):
-        '''Reads a series from a two-column whitespace-delimited text file. If
+    def read(filename, col1=0, col2=1, name=None):
+        """Reads a series from a two-column whitespace-delimited text file. If
         there are more than two columns, the extra ones are ignored. If there
-        is a header line (or any other non-numeric line), it is ignored.'''
-        
+        is a header line (or any other non-numeric line), it is ignored."""
+
         rows = []
         # 'U' for universal newlines
         with open(filename, 'U') as fh:
@@ -93,52 +102,54 @@ class DataSeries:
                     if len(parts) > col2:
                         value = float(parts[col2])
                     else:
-                        print 'WARNING: missing data at '+str(position)
+                        print 'WARNING: missing data at ' + str(position)
                         value = 0
                     rows.append([position, value])
                 except ValueError:
-                    pass # ignore non-numeric lines
+                    pass  # ignore non-numeric lines
         data = array(rows).transpose()
         return DataSeries(data, name=name, filename=filename)
 
-class Gaussian:
 
+class Gaussian:
     def __init__(self, m_abs, m, bhalf, dp):
-        self.m_abs = m_abs # absolute contribution (not used)
-        self.m = m # relative contribution (size of peak)
-        self.a = m / (dp * (2*pi)**0.5) # corrected for dispersion
-        self.bhalf = bhalf # mean log of field (position of peak)
-        self.dp = dp # dispersion parameter (width of peak)
+        self.m_abs = m_abs  # absolute contribution (not used)
+        self.m = m  # relative contribution (size of peak)
+        self.a = m / (dp * (2 * pi) ** 0.5)  # corrected for dispersion
+        self.bhalf = bhalf  # mean log of field (position of peak)
+        self.dp = dp  # dispersion parameter (width of peak)
 
     def evaluate(self, x):
-        (a,b,c) = (self.a, self.bhalf, self.dp)
-        return a*exp(-(((x-b)**2) / (2*(c**2))))
+        (a, b, c) = (self.a, self.bhalf, self.dp)
+        return a * exp(-(((x - b) ** 2) / (2 * (c ** 2))))
 
     def cdf(self, x):
-        (a,b,c) = (self.a, self.bhalf, self.dp)
-        return 0.5*(1+erf((x-b)/(sqrt(2*c**2))))
+        (a, b, c) = (self.a, self.bhalf, self.dp)
+        return 0.5 * (1 + erf((x - b) / (sqrt(2 * c ** 2))))
 
     def to_csv_line(self):
         return '%.2f,%.2f,%.2f,%.2f,%.2f' % \
-            (self.m_abs, self.m, self.a, self.bhalf, self.dp)
+               (self.m_abs, self.m, self.a, self.bhalf, self.dp)
 
     @staticmethod
     def csv_header():
         return 'M_abs,m_rel,a,Bhalf,DP'
-        
+
+
 class IrmCurves:
-    '''A collection of cumulative log-gaussian functions
+    """A collection of cumulative log-gaussian functions
     which can be evaluated to give a modelled IRM remanence
-    for a specified applied field.'''
+    for a specified applied field."""
 
     def __init__(self, name, sirm, params):
         self.name = name
         self.sirm = sirm
         self.components = [Gaussian(*p) for p in params]
 
-    def evaluate(self, x, normalize = False):
+    def evaluate(self, x, normalize=False):
         result = sum([g.evaluate(x) for g in self.components])
-        if not normalize: result = result * self.sirm
+        if not normalize:
+            result = result * self.sirm
         return result
 
     @staticmethod
@@ -153,12 +164,13 @@ class IrmCurves:
         infile.readline()
         while True:
             comp = infile.readline()
-            if not comp.startswith(' Component'): break
+            if not comp.startswith(' Component'):
+                break
             param = [float(re2.search(infile.readline()).groups()[0])]
             line3 = infile.readline()
-            param += map(float,re3.search(line3).groups())
+            param += map(float, re3.search(line3).groups())
             params.append(param)
-            infile.readline() # skip blank line
+            infile.readline()  # skip blank line
         return IrmCurves(basename(filename), sirm, params)
 
     def to_csv_line(self):
@@ -168,12 +180,13 @@ class IrmCurves:
 
     def csv_header(self):
         return 'Sample,' + \
-            ','.join([Gaussian.csv_header()] * len(self.components))
+               ','.join([Gaussian.csv_header()] * len(self.components))
+
 
 def plot_clg_fit(series, curves):
-
     sirm = 1
-    if curves: sirm = curves.sirm
+    if curves:
+        sirm = curves.sirm
 
     if series:
         xs = map(log10, series.data[0][1:])
@@ -195,8 +208,8 @@ def plot_clg_fit(series, curves):
     pylab.ion()
     pylab.show()
 
-class App:
 
+class App:
     def __init__(self, master, options):
 
         self.series = None
@@ -208,12 +221,12 @@ class App:
 
         self.data_button = \
             Tki.Button(frame, text="Choose Data file",
-                           command=self.choose_data_file)
+                       command=self.choose_data_file)
         self.data_button.grid(row=0, pady=5)
 
         self.irmunmix_button = \
             Tki.Button(frame, text="Choose IrmUnmix file",
-                           command=self.choose_curves_file)
+                       command=self.choose_curves_file)
         self.irmunmix_button.grid(row=1, pady=5)
 
         self.plot_button = \
@@ -221,34 +234,40 @@ class App:
         self.plot_button.grid(row=2, pady=5)
 
         self.quit_button = Tki.Button(frame, text="Quit",
-                                     command=frame.quit)
+                                      command=frame.quit)
         self.quit_button.grid(row=3, pady=5)
 
         master.update_idletasks()
 
         w = master.winfo_screenwidth()
         h = master.winfo_screenheight()
-        mastersize = tuple(int(_) for _ in master.geometry().split('+')[0].split('x'))
-        x = w/2 - mastersize[0]/2
-        y = h/2 - mastersize[1]/2
-        # master.geometry("%dx%d+%d+%d" % (mastersize + (x, y)))
+        mastersize = tuple(
+            int(_) for _ in master.geometry().split('+')[0].split('x'))
+        x = w / 2 - mastersize[0] / 2
+        y = h / 2 - mastersize[1] / 2
+        master.geometry("%dx%d+%d+%d" % (mastersize + (x, y)))
 
-        if options.data_file: self.read_data_file(options.data_file)
-        if options.curves_file: self.read_curves_file(options.curves_file)
-        if options.plot_now: self.plot()
-    
+        if options.data_file:
+            self.read_data_file(options.data_file)
+        if options.curves_file:
+            self.read_curves_file(options.curves_file)
+        if options.plot_now:
+            self.plot()
+
     def choose_curves_file(self):
         input_file = \
-            askopenfilename(title = 'Select IrmUnmix parameter file')
-        if input_file: self.read_curves_file(input_file)
+            askopenfilename(title='Select IrmUnmix parameter file')
+        if input_file:
+            self.read_curves_file(input_file)
 
     def read_curves_file(self, input_file):
         self.curves = IrmCurves.read_file(input_file)
 
     def choose_data_file(self):
         input_file = \
-            askopenfilename(title = 'Select IRM data file')
-        if input_file: self.read_data_file(input_file)
+            askopenfilename(title='Select IRM data file')
+        if input_file:
+            self.read_data_file(input_file)
 
     def read_data_file(self, input_file):
         self.series = DataSeries.read(input_file)
@@ -256,8 +275,9 @@ class App:
     def plot(self):
         plot_clg_fit(self.series, self.curves)
 
+
 def main():
-    parser = OptionParser(usage = 'usage: clgplot [options]')
+    parser = OptionParser(usage='usage: clgplot [options]')
     parser.add_option('-d', '--data', dest='data_file',
                       help='Read IRM intensities from FILE.', metavar='FILE')
     parser.add_option('-c', '--curves', dest='curves_file',
@@ -265,9 +285,10 @@ def main():
     parser.add_option('-p', '--plot', action='store_true', dest='plot_now',
                       default=False, help='Plot at once.')
     (options, args) = parser.parse_args()
-    
+
     root = Tki.Tk()
-    app = App(root, options)
+    App(root, options)
     root.mainloop()
+
 
 main()
