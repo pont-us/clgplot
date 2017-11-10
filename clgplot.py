@@ -31,7 +31,7 @@ clgplot reads two types of file: raw IRM acquisition data (as a two-column
 file containing applied field and measured magnetization), and output files
 from the IrmUnmix program [1] which contain a representation of IRM
 acquisition data as a sum of cumulative log-Gaussian (CLG) curves. clgplot
-produces a plot of the data and/or curves using pylab. The plot can be viewed
+produces a plot of the data and/or curves using pyplot. The plot can be viewed
 on-screen and saved to a file.
 
 clgplot is copyright 2012-2017 by Pontus Lurcock, who may be contacted at
@@ -44,7 +44,7 @@ http://dx.doi.org/10.1046/j.0956-540x.2001.01558.x
 
 import Tkinter as Tki
 import os
-import pylab
+from matplotlib import pyplot
 import re
 from math import sqrt, erf
 from numpy import pi, exp, log10, array, arange
@@ -93,8 +93,8 @@ class DataSeries:
         is a header line (or any other non-numeric line), it is ignored."""
 
         rows = []
-        # 'U' for universal newlines
-        with open(filename, 'U') as fh:
+        # "U" for universal newlines
+        with open(filename, "U") as fh:
             for line in fh.readlines():
                 parts = line.split()
                 try:
@@ -102,7 +102,7 @@ class DataSeries:
                     if len(parts) > col2:
                         value = float(parts[col2])
                     else:
-                        print 'WARNING: missing data at ' + str(position)
+                        print "WARNING: missing data at " + str(position)
                         value = 0
                     rows.append([position, value])
                 except ValueError:
@@ -128,12 +128,12 @@ class Gaussian:
         return 0.5 * (1 + erf((x - b) / (sqrt(2 * c ** 2))))
 
     def to_csv_line(self):
-        return '%.2f,%.2f,%.2f,%.2f,%.2f' % \
+        return "%.2f,%.2f,%.2f,%.2f,%.2f" % \
                (self.m_abs, self.m, self.a, self.bhalf, self.dp)
 
     @staticmethod
     def csv_header():
-        return 'M_abs,m_rel,a,Bhalf,DP'
+        return "M_abs,m_rel,a,Bhalf,DP"
 
 
 class IrmCurves:
@@ -154,17 +154,17 @@ class IrmCurves:
 
     @staticmethod
     def read_file(filename):
-        re1 = re.compile(r'^ True SIRM= +([0-9.E-]+)')
-        re2 = re.compile(r'^ Abs Cont= +([0-9.E-]+)')
-        re3 = re.compile(r'^ Rel Cont= +([0-9.E-]+) +Mean= +([0-9.E-]+) +' +
-                         r'DP= +([0-9.E-]+)\s+$')
+        re1 = re.compile(r"^ True SIRM= +([0-9.E-]+)")
+        re2 = re.compile(r"^ Abs Cont= +([0-9.E-]+)")
+        re3 = re.compile(r"^ Rel Cont= +([0-9.E-]+) +Mean= +([0-9.E-]+) +" +
+                         r"DP= +([0-9.E-]+)\s+$")
         infile = open(filename)
         sirm = float(re1.search(infile.readline()).groups()[0])
         params = []
         infile.readline()
         while True:
             comp = infile.readline()
-            if not comp.startswith(' Component'):
+            if not comp.startswith(" Component"):
                 break
             param = [float(re2.search(infile.readline()).groups()[0])]
             line3 = infile.readline()
@@ -174,13 +174,13 @@ class IrmCurves:
         return IrmCurves(basename(filename), sirm, params)
 
     def to_csv_line(self):
-        result = self.name + ','
-        result += ','.join([c.to_csv_line() for c in self.components])
+        result = self.name + ","
+        result += ",".join([c.to_csv_line() for c in self.components])
         return result
 
     def csv_header(self):
-        return 'Sample,' + \
-               ','.join([Gaussian.csv_header()] * len(self.components))
+        return "Sample," + \
+               ",".join([Gaussian.csv_header()] * len(self.components))
 
 
 def plot_clg_fit(series, curves):
@@ -191,22 +191,22 @@ def plot_clg_fit(series, curves):
     if series:
         xs = map(log10, series.data[0][1:])
         ys = series.data[1][1:]
-        pylab.plot(xs, gradient(xs, ys) / sirm, marker='o',
-                   ls='', color='black', markerfacecolor='none', markersize=6)
+        pyplot.plot(xs, gradient(xs, ys) / sirm, marker="o",
+                    ls="", color="black", markerfacecolor="none", markersize=6)
 
     if curves:
         xs = arange(0.1, 3, 0.02)
         ys = [curves.evaluate(x, True) for x in xs]
-        pylab.plot(xs, ys, linewidth=1.0, color='black')
+        pyplot.plot(xs, ys, linewidth=1.0, color="black")
         for curve in curves.components:
             ys2 = [curve.evaluate(x) for x in xs]
-            pylab.plot(xs, ys2, linewidth=0.5, color='black')
+            pyplot.plot(xs, ys2, linewidth=0.5, color="black")
 
-    pylab.ylim(ymin=0)
-    pylab.xlabel('log10(Applied field (mT))')
-    pylab.ylabel('Gradient of magnetization')
-    pylab.ion()
-    pylab.show()
+    pyplot.ylim(ymin=0)
+    pyplot.xlabel("log10(Applied field (mT))")
+    pyplot.ylabel("Gradient of magnetization")
+    pyplot.ion()
+    pyplot.show()
 
 
 class App:
@@ -215,7 +215,7 @@ class App:
         self.series = None
         self.curves = None
 
-        master.title('CLG Plot')
+        master.title("CLG Plot")
         frame = Tki.Frame(master)
         frame.grid(padx=20, pady=15)
 
@@ -242,7 +242,7 @@ class App:
         w = master.winfo_screenwidth()
         h = master.winfo_screenheight()
         mastersize = tuple(
-            int(_) for _ in master.geometry().split('+')[0].split('x'))
+            int(_) for _ in master.geometry().split("+")[0].split("x"))
         x = w / 2 - mastersize[0] / 2
         y = h / 2 - mastersize[1] / 2
         master.geometry("%dx%d+%d+%d" % (mastersize + (x, y)))
@@ -256,7 +256,7 @@ class App:
 
     def choose_curves_file(self):
         input_file = \
-            askopenfilename(title='Select IrmUnmix parameter file')
+            askopenfilename(title="Select IrmUnmix parameter file")
         if input_file:
             self.read_curves_file(input_file)
 
@@ -265,7 +265,7 @@ class App:
 
     def choose_data_file(self):
         input_file = \
-            askopenfilename(title='Select IRM data file')
+            askopenfilename(title="Select IRM data file")
         if input_file:
             self.read_data_file(input_file)
 
@@ -277,13 +277,13 @@ class App:
 
 
 def main():
-    parser = OptionParser(usage='usage: clgplot [options]')
-    parser.add_option('-d', '--data', dest='data_file',
-                      help='Read IRM intensities from FILE.', metavar='FILE')
-    parser.add_option('-c', '--curves', dest='curves_file',
-                      help='Read curve parameters from FILE.', metavar='FILE')
-    parser.add_option('-p', '--plot', action='store_true', dest='plot_now',
-                      default=False, help='Plot at once.')
+    parser = OptionParser(usage="usage: clgplot [options]")
+    parser.add_option("-d", "--data", dest="data_file",
+                      help="Read IRM intensities from FILE.", metavar="FILE")
+    parser.add_option("-c", "--curves", dest="curves_file",
+                      help="Read curve parameters from FILE.", metavar="FILE")
+    parser.add_option("-p", "--plot", action="store_true", dest="plot_now",
+                      default=False, help="Plot at once.")
     (options, args) = parser.parse_args()
 
     root = Tki.Tk()
