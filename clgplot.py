@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # clgplot is Copyright 2012-2017 Pontus Lurcock (pont at talvi dot net)
@@ -42,7 +42,7 @@ pont talvi net
 http://dx.doi.org/10.1046/j.0956-540x.2001.01558.x
 """
 
-import Tkinter as Tki
+import tkinter
 import os
 from matplotlib import pyplot
 import re
@@ -50,7 +50,7 @@ from math import sqrt, erf
 from numpy import pi, exp, log10, array, arange
 from optparse import OptionParser
 from os.path import basename
-from tkFileDialog import askopenfilename
+from tkinter.filedialog import askopenfilename
 
 
 def gradient(xs, ys):
@@ -102,7 +102,7 @@ class DataSeries:
                     if len(parts) > col2:
                         value = float(parts[col2])
                     else:
-                        print "WARNING: missing data at " + str(position)
+                        print("WARNING: missing data at " + str(position))
                         value = 0
                     rows.append([position, value])
                 except ValueError:
@@ -189,7 +189,7 @@ def plot_clg_fit(series, curves):
         sirm = curves.sirm
 
     if series:
-        xs = map(log10, series.data[0][1:])
+        xs = list(map(log10, series.data[0][1:]))
         ys = series.data[1][1:]
         pyplot.plot(xs, gradient(xs, ys) / sirm, marker="o",
                     ls="", color="black", markerfacecolor="none", markersize=6)
@@ -216,25 +216,25 @@ class App:
         self.curves = None
 
         master.title("CLG Plot")
-        frame = Tki.Frame(master)
+        frame = tkinter.Frame(master)
         frame.grid(padx=20, pady=15)
 
         self.data_button = \
-            Tki.Button(frame, text="Choose Data file",
-                       command=self.choose_data_file)
+            tkinter.Button(frame, text="Choose Data file",
+                           command=self.choose_data_file)
         self.data_button.grid(row=0, pady=5)
 
         self.irmunmix_button = \
-            Tki.Button(frame, text="Choose IrmUnmix file",
-                       command=self.choose_curves_file)
+            tkinter.Button(frame, text="Choose IrmUnmix file",
+                           command=self.choose_curves_file)
         self.irmunmix_button.grid(row=1, pady=5)
 
         self.plot_button = \
-            Tki.Button(frame, text="Plot data", command=self.plot)
+            tkinter.Button(frame, text="Plot data", command=self.plot)
         self.plot_button.grid(row=2, pady=5)
 
-        self.quit_button = Tki.Button(frame, text="Quit",
-                                      command=frame.quit)
+        self.quit_button = tkinter.Button(frame, text="Quit",
+                                          command=frame.quit)
         self.quit_button.grid(row=3, pady=5)
 
         master.update_idletasks()
@@ -286,7 +286,7 @@ def main():
                       default=False, help="Plot at once.")
     (options, args) = parser.parse_args()
 
-    root = Tki.Tk()
+    root = tkinter.Tk()
     App(root, options)
     root.mainloop()
 
