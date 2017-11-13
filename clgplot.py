@@ -48,7 +48,7 @@ from matplotlib import pyplot
 import re
 from math import sqrt, erf
 from numpy import pi, exp, log10, array, arange
-from optparse import OptionParser
+import argparse
 from os.path import basename
 from tkinter.filedialog import askopenfilename
 
@@ -277,17 +277,17 @@ class App:
 
 
 def main():
-    parser = OptionParser(usage="usage: clgplot [options]")
-    parser.add_option("-d", "--data", dest="data_file",
-                      help="Read IRM intensities from FILE.", metavar="FILE")
-    parser.add_option("-c", "--curves", dest="curves_file",
-                      help="Read curve parameters from FILE.", metavar="FILE")
-    parser.add_option("-p", "--plot", action="store_true", dest="plot_now",
-                      default=False, help="Plot at once.")
-    (options, args) = parser.parse_args()
+    parser = argparse.ArgumentParser(description="usage: clgplot [options]")
+    parser.add_argument("-d", "--data", dest="data_file",
+                        help="Read IRM intensities from FILE.", metavar="FILE")
+    parser.add_argument("-c", "--curves", dest="curves_file",
+                        help="Read curve parameters from FILE.", metavar="FILE")
+    parser.add_argument("-p", "--plot", action="store_true", dest="plot_now",
+                        default=False, help="Plot at once.")
+    args = parser.parse_args()
 
     root = tkinter.Tk()
-    App(root, options)
+    App(root, args)
     root.mainloop()
 
 
