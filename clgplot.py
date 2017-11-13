@@ -70,6 +70,34 @@ def gradient(xs, ys):
     return array(result)
 
 
+def x_for_half_max_y(xs, ys):
+    """Return the x value for which the corresponding y value is half
+    of the maximum y value. If there is no exact corresponding x value,
+    one is calculated by linear interpolation from the two
+    surrounding values,
+
+    :param xs: x values
+    :param ys: y values corresponding to the x values
+    :return:
+    """
+
+    if len(xs) != len(ys):
+        raise ValueError("xs and ys must be of equal length")
+
+    half_max_y = max(ys) / 2
+    for i in range(len(xs)-1):
+        if ys[i+1] >= half_max_y:
+            x_dist = xs[i+1] - xs[i]
+            y_dist = ys[i+1] - ys[i]
+            y_offset = half_max_y - ys[i]
+            if y_offset == 0:
+                return xs[i]
+            else:
+                x_offset = y_offset / y_dist * x_dist
+                return xs[i] + x_offset
+    return None
+
+
 class DataSeries:
     """A lightly wrapped 2-column matrix with a method for reading
     it from a file."""
@@ -291,4 +319,5 @@ def main():
     root.mainloop()
 
 
-main()
+if __name__ == "__main__":
+    main()
