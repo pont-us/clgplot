@@ -74,7 +74,7 @@ def x_for_half_max_y(xs, ys):
     """Return the x value for which the corresponding y value is half
     of the maximum y value. If there is no exact corresponding x value,
     one is calculated by linear interpolation from the two
-    surrounding values,
+    surrounding values.
 
     :param xs: x values
     :param ys: y values corresponding to the x values
@@ -115,7 +115,7 @@ class DataSeries:
                 self.name = None
 
     @staticmethod
-    def read(filename, col1=0, col2=1, name=None):
+    def read_file(filename, col1=0, col2=1, name=None):
         """Reads a series from a two-column whitespace-delimited text file. If
         there are more than two columns, the extra ones are ignored. If there
         is a header line (or any other non-numeric line), it is ignored."""
@@ -211,7 +211,7 @@ class IrmCurves:
                ",".join([Gaussian.csv_header()] * len(self.components))
 
 
-def plot_clg_fit(series, curves):
+def plot_clg_fit(series, curves, output_filename=None):
     sirm = 1
     if curves:
         sirm = curves.sirm
@@ -233,15 +233,19 @@ def plot_clg_fit(series, curves):
     pyplot.ylim(ymin=0)
     pyplot.xlabel("log10(Applied field (mT))")
     pyplot.ylabel("Gradient of magnetization")
-    pyplot.ion()
-    pyplot.show()
+    if output_filename:
+        pyplot.savefig(output_filename)
+    else:
+        pyplot.ion()
+        pyplot.show()
 
 
 class App:
-    def __init__(self, master, options):
+    def __init__(self, master, data=None, curves=None,
+                 plot_now=False):
 
-        self.series = None
-        self.curves = None
+        self.series = data
+        self.curves = curves
 
         master.title("CLG Plot")
         frame = tkinter.Frame(master)
@@ -275,30 +279,19 @@ class App:
         y = h / 2 - mastersize[1] / 2
         master.geometry("%dx%d+%d+%d" % (mastersize + (x, y)))
 
-        if options.data_file:
-            self.read_data_file(options.data_file)
-        if options.curves_file:
-            self.read_curves_file(options.curves_file)
-        if options.plot_now:
+        if plot_now:
             self.plot()
 
     def choose_curves_file(self):
         input_file = \
             askopenfilename(title="Select IrmUnmix parameter file")
         if input_file:
-            self.read_curves_file(input_file)
-
-    def read_curves_file(self, input_file):
-        self.curves = IrmCurves.read_file(input_file)
+            self.curves = IrmCurves.read_file(input_file)
 
     def choose_data_file(self):
-        input_file = \
-            askopenfilename(title="Select IRM data file")
+        input_file = askopenfilename(title="Select IRM data file")
         if input_file:
-            self.read_data_file(input_file)
-
-    def read_data_file(self, input_file):
-        self.series = DataSeries.read(input_file)
+            self.series = DataSeries.read_file(input_file)
 
     def plot(self):
         plot_clg_fit(self.series, self.curves)
@@ -311,12 +304,31 @@ def main():
     parser.add_argument("-c", "--curves", dest="curves_file",
                         help="Read curve parameters from FILE.", metavar="FILE")
     parser.add_argument("-p", "--plot", action="store_true", dest="plot_now",
-                        default=False, help="Plot at once.")
+                        default=False, help="Plot in GUI at once")
+    parser.add_argument("-n", "--no-gui", action="store_true",
+                        default=False, help="Don't start the GUI")
+    parser.add_argument("-o", "--output", metavar="FILE",
+                        help="Write plot to specified file")
     args = parser.parse_args()
 
-    root = tkinter.Tk()
-    App(root, args)
-    root.mainloop()
+    data = None
+    if args.data_file:
+        data = DataSeries.read_file(args.data_file)
+        hpcr = x_for_half_max_y(data.data[0], data.data[1])
+        print("H'cr = {:.5g}".format(hpcr))
+
+    curves = None
+    if args.curves_file:
+        curves = IrmCurves.read_file(args.curves_file)
+
+    if args.output:
+        plot_clg_fit(data, curves, args.output)
+
+    if not args.no_gui:
+        root = tkinter.Tk()
+        App(root, data=data, curves=curves,
+            plot_now=args.plot_now)
+        root.mainloop()
 
 
 if __name__ == "__main__":
